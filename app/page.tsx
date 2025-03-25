@@ -17,6 +17,8 @@ export default function Home() {
         </div>
         <div className={"font-orbitron flex gap-5 text-gray-400"}>
           <button className={"py-2 px-4 border-2 border-gray-500 bg-gray-800 rounded-lg flex items-center gap-2 hover:cursor-pointer"}>
+            <div className={"w-4 h-4 border-t-2 border-l-2 border-gray-500 absolute -top-2 -left-2"}></div>
+            <div className={"w-4 h-4 border-b-2 border-r-2 border-gray-500 absolute -bottom-2 -right-2"}></div>
             <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" className={"fill-current"}>
               <g id="Frame">
                 <g clipPath="url(#clip0_24_185)">
@@ -26,15 +28,7 @@ export default function Home() {
             </svg>
             Continuer
           </button>
-          <button className={`
-            py-2 px-4 
-            border-2 border-gray-500 
-            bg-gray-800 
-            rounded-lg 
-            relative 
-            flex items-center gap-2 
-            hover:cursor-pointer
-          `}>
+          <button className={`py-2 px-4 border-2 border-gray-500 bg-gray-800 rounded-lg relative flex items-center gap-2 hover:cursor-pointer`}>
             <div className={"w-4 h-4 border-t-2 border-l-2 border-gray-500 absolute -top-2 -left-2"}></div>
             <div className={"w-4 h-4 border-b-2 border-r-2 border-gray-500 absolute -bottom-2 -right-2"}></div>
             <svg width="14" height="16" viewBox="0 0 14 16" xmlns="http://www.w3.org/2000/svg" className={"fill-current"}>
