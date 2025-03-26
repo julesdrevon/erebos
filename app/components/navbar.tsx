@@ -16,7 +16,7 @@ const Navbar = () => {
         Erebos
       </h2>
       <Image
-        src="frame.svg"
+        src={"Frame.svg"}
         alt="Navigation logo"
         width={50}
         height={50}
