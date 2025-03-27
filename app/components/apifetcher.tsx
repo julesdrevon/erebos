@@ -1,50 +1,58 @@
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // Utilisez next/navigation pour les routeurs
+import axios, { AxiosError } from 'axios';
+import { useRouter } from 'next/navigation';
 
 interface ApiDataFetcherProps {
-  endpoint?: string; // Partie de l'URL après /api/
-  params?: Record<string, string>; // Paramètres de requête
+  endpoint?: string;
+  params?: Record<string, any>;
+  method?: 'get' | 'post';
+  data?: any;
 }
 
-const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({ endpoint = '', params = {} }) => {
+const ApiDataFetcher: React.FC<ApiDataFetcherProps> = ({
+                                                         endpoint = '',
+                                                         params = {},
+                                                         method = 'get',
+                                                         data = null,
+                                                       }) => {
   const router = useRouter();
   useEffect(() => {
-    const getData = async () => {
+    const fetchData = async () => {
       const baseUrl = "https://api.jules-drevon.fr/api/";
-      let url = `${baseUrl}${endpoint}`;
-
-      // Ajoute les paramètres de requête à l'URL
-      const urlParams = new URLSearchParams(params);
-      const queryString = urlParams.toString();
-      if (queryString) {
-        url += `?${queryString}`;
-      }
+      const url = `${baseUrl}${endpoint}`;
 
       try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Erreur lors de la récupération des données. Statut: ${response.status} ${response.statusText}`);
+        let response;
+        switch (method) {
+          case 'get':
+            response = await axios.get(url, { params });
+            break;
+          case 'post':
+            response = await axios.post(url, data, { params });
+            break;
+          default:
+            response = await axios.get(url, { params });
         }
-        const text = await response.text();
-        try {
-          const json = JSON.parse(text);
-          console.log(json);
-        } catch (parseError) {
-          console.error("Erreur d'analyse JSON:", parseError);
-          console.error("Texte de la réponse brute:", text);
-        }
-
+        console.log(response.data);
       } catch (error: any) {
-        console.error("Erreur de récupération:", error.message);
+        if (axios.isAxiosError(error)) {
+          // Erreur Axios
+          console.error("Erreur Axios :", error.message);
+          console.error("Détails de la réponse :", error.response?.data);
+          console.error("Statut de la réponse :", error.response?.status);
+        } else {
+          // Erreur non-Axios
+          console.error("Erreur de récupération :", error.message);
+        }
       }
     };
 
-    getData();
-  }, [endpoint, params, router]);
+    fetchData();
+  }, [endpoint, params, method, data, router]);
 
+  // **Ajout du return manquant :**
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <p className="text-gray-700">Fetching data from API...</p>
+    <div className="">
     </div>
   );
 };

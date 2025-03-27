@@ -16,7 +16,7 @@ export default function Profile() {
 
       <Navbar />
 
-      <main className="flex-grow w-full flex justify-center items-center h-full font-orbitron">
+      <main className="flex-grow w-full flex flex-col justify-center items-center h-full font-orbitron gap-5">
         <div className="bg-gray-800/80 border-2 border-gray-700 bg-opacity-90 rounded-lg p-10 w-full lg:max-w-1/2 max-w-3/4 pt-14 relative flex justify-center">
           <Image src={"/Avatar.jpg"} alt="Profile" width={100} height={100} className="rounded-full border-2 border-gray-700 bg-gray-800/80 absolute -top-14" />
           <div className="flex flex-col gap-5 w-full">
@@ -56,8 +56,14 @@ export default function Profile() {
             </div>
           </div>
         </div>
+        <button className="relative flex items-center justify-center gap-2 px-4 py-2 text-red-500 bg-gray-800 border-2 rounded-lg hover:cursor-not-allowed">
+          <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 fill-current" />
+          <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 fill-current" />
+          <div className="flex items-center gap-2">
+            Déconnexion
+          </div>
+        </button>
       </main>
-
       <Footer />
     </div>
   );
