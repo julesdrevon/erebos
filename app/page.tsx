@@ -35,7 +35,8 @@ export default function Home() {
                     <path d="M8 2.5C8 1.94687 7.55312 1.5 7 1.5C6.44688 1.5 6 1.94687 6 2.5V7H1.5C0.946875 7 0.5 7.44688 0.5 8C0.5 8.55312 0.946875 9 1.5 9H6V13.5C6 14.0531 6.44688 14.5 7 14.5C7.55312 14.5 8 14.0531 8 13.5V9H12.5C13.0531 9 13.5 8.55312 13.5 8C13.5 7.44688 13.0531 7 12.5 7H8V2.5Z"/>
                   </svg>
                 ),
-                text: "Nouvelle partie"
+                text: "Nouvelle partie",
+                click: () => router.push('/login')
               }
             ].map(({ icon, text, click }) => (
               <button key={text} onClick={click} className="relative flex items-center justify-center gap-2 px-4 py-2 text-gray-400 bg-gray-800 border-2 rounded-lg hover:cursor-pointer group transition-all duration-300 ease-in-out hover:bg-gray-700 hover:scale-105 hover:shadow-lg active:scale-95 hover:border-amber-500">

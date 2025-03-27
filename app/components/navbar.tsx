@@ -16,8 +16,8 @@ const Navbar = () => {
         Erebos
       </h2>
       <Image
-        src={"Frame.svg"}
-        alt="Navigation logo"
+        src={"/Avatar.jpg"}
+        alt="Avatar"
         width={50}
         height={50}
         onClick={() => router.push('/profile')}

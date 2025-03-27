@@ -3,6 +3,7 @@ import { SetStateAction, useState} from "react";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import Image from 'next/image';
+import Result from "@/app/components/result";
 
 export default function Profile() {
   const [name, setName] = useState("Pierre");
@@ -17,7 +18,7 @@ export default function Profile() {
 
       <main className="flex-grow w-full flex justify-center items-center h-full font-orbitron">
         <div className="bg-gray-800/80 border-2 border-gray-700 bg-opacity-90 rounded-lg p-10 w-full lg:max-w-1/2 max-w-3/4 pt-14 relative flex justify-center">
-          <Image src={"Frame.svg"} alt="Profile" width={100} height={100} className="rounded-full border-2 border-gray-700 bg-gray-800/80 absolute -top-14" />
+          <Image src={"/Avatar.jpg"} alt="Profile" width={100} height={100} className="rounded-full border-2 border-gray-700 bg-gray-800/80 absolute -top-14" />
           <div className="flex flex-col gap-5 w-full">
             <div className="items-center flex flex-col w-full">
               <div className="flex items-center justify-center">
@@ -48,35 +49,9 @@ export default function Profile() {
               <p className="text-gray-300">Sessions récentes</p>
 
               <div className="flex flex-col gap-2">
-                <div className="bg-gray-900 px-4 py-2 rounded flex justify-between items-center border-2 border-gray-700">
-                  <div>
-                    <div className="flex items-center text-red-500">
-                      <p><span className="">●</span> Échoué</p>
-                    </div>
-                    <div className="text-xs text-gray-400">Échoué le Jan 15, 2025</div>
-                  </div>
-                  <div className="text-xs text-gray-400">2h 15m</div>
-                </div>
-
-                <div className="bg-gray-900 px-4 py-2 rounded flex justify-between items-center border-2 border-gray-700">
-                  <div>
-                    <div className="flex items-center text-green-500">
-                      <p><span className="">●</span> Réussit</p>
-                    </div>
-                    <div className="text-xs text-gray-400">Réussit le Jan 14, 2025</div>
-                  </div>
-                  <div className="text-xs text-gray-400">1h 45m</div>
-                </div>
-
-                <div className="bg-gray-900 px-4 py-2 rounded flex justify-between items-center border-2 border-gray-700">
-                  <div>
-                    <div className="flex items-center text-red-500">
-                      <p><span className="">●</span> Échoué</p>
-                    </div>
-                    <div className="text-xs text-gray-400">Échoué le Jan 13, 2025</div>
-                  </div>
-                  <div className="text-xs text-gray-400">3h 32m</div>
-                </div>
+                <Result status={"failure"} date={""} minutes={0} seconds={0}/>
+                <Result status={"failure"} date={""} minutes={0} seconds={0}/>
+                <Result status={"success"} date={""} minutes={0} seconds={0}/>
               </div>
             </div>
           </div>
