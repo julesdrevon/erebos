@@ -46,7 +46,7 @@ export default function Login() {
           </div>
         </div>
         <div>
-          <h2 className="text-4xl">Erebos</h2>
+          <h2 className="text-4xl flex flex-col items-center">Erebos<span>Connexion</span></h2>
         </div>
         <div className="border-2 border-gold relative py-5 px-6 bg-zinc-800/40">
           <div className="rounded-full bg-gold w-3 h-3 absolute top-0 left-0 -translate-2/3" />
@@ -61,7 +61,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="border-2 border-gold/50 rounded bg-zinc-800/50 p-2"
+                  className="border-2 border-gold/50 rounded bg-zinc-800/50 p-2 outline-none"
                   name="email"
                   id="email"
                   required
@@ -73,7 +73,7 @@ export default function Login() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="border-2 border-gold/50 rounded bg-zinc-800/50 p-2"
+                  className="border-2 border-gold/50 rounded bg-zinc-800/50 p-2 outline-none"
                   name="password"
                   id="password"
                   required

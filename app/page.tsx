@@ -18,7 +18,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex gap-10 font-orbitron">
+          <div className="gap-10 font-orbitron hidden lg:flex">
             {[
               {
                 icon: (
@@ -38,15 +38,7 @@ export default function Home() {
                 text: "Nouvelle partie"
               }
             ].map(({ icon, text, click }) => (
-              <button
-                key={text}
-                onClick={click}
-                className="relative flex items-center justify-center gap-2 px-4 py-2 text-gray-400 bg-gray-800 border-2 rounded-lg hover:cursor-pointer group
-    transition-all duration-300 ease-in-out
-    hover:bg-gray-700
-    hover:scale-105 hover:shadow-lg
-    active:scale-95 hover:border-amber-500"
-              >
+              <button key={text} onClick={click} className="relative flex items-center justify-center gap-2 px-4 py-2 text-gray-400 bg-gray-800 border-2 rounded-lg hover:cursor-pointer group transition-all duration-300 ease-in-out hover:bg-gray-700 hover:scale-105 hover:shadow-lg active:scale-95 hover:border-amber-500">
                 <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 fill-current transition-all duration-300 group-hover:border-amber-500" />
                 <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 fill-current transition-all duration-300 group-hover:border-amber-500" />
                 <div className="flex items-center gap-2 transition-all duration-300 group-hover:translate-x-1">
@@ -55,6 +47,15 @@ export default function Home() {
                 </div>
               </button>
             ))}
+          </div>
+          <div className="flex lg:hidden max-w-3/4">
+            <button className="relative flex items-center justify-center gap-2 px-4 py-2 text-red-500 bg-gray-800 border-2 rounded-lg hover:cursor-not-allowed">
+              <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 fill-current" />
+              <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 fill-current" />
+              <div className="flex items-center gap-2">
+                Désolé, Erebos est uniquement disponible en version ordinateur
+              </div>
+            </button>
           </div>
         </main>
         <Footer/>

@@ -16,14 +16,14 @@ export default function Profile() {
       <Navbar />
 
       <main className="flex-grow w-full flex justify-center items-center h-full font-orbitron">
-        <div className="bg-gray-800/80 border-2 border-gray-700 bg-opacity-90 rounded-lg p-10 w-full max-w-1/2 pt-14 relative flex justify-center">
+        <div className="bg-gray-800/80 border-2 border-gray-700 bg-opacity-90 rounded-lg p-10 w-full lg:max-w-1/2 max-w-3/4 pt-14 relative flex justify-center">
           <Image src={"Frame.svg"} alt="Profile" width={100} height={100} className="rounded-full border-2 border-gray-700 bg-gray-800/80 absolute -top-14" />
           <div className="flex flex-col gap-5 w-full">
             <div className="items-center flex flex-col w-full">
-              <div className="">
-                <div className="flex items-center bg-gray-900 py-2 px-4 rounded border-2 border-gray-700">
+              <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center bg-gray-900 py-2 px-4 rounded border-2 border-gray-700 w-full">
                   <input
-                    className="text-sm font-semibold bg-transparent border-none outline-none text-white"
+                    className="text-sm outline-none w-full"
                     type="text"
                     value={name} // Valeur liée à l'état local
                     onChange={handleNameChange} // Met à jour l'état quand l'utilisateur tape
@@ -40,7 +40,6 @@ export default function Profile() {
                       </clipPath>
                     </defs>
                   </svg>
-
                 </div>
               </div>
             </div>
@@ -64,7 +63,7 @@ export default function Profile() {
                     <div className="flex items-center text-green-500">
                       <p><span className="">●</span> Réussit</p>
                     </div>
-                    <div className="text-xs text-gray-400">Complétée le Jan 14, 2025</div>
+                    <div className="text-xs text-gray-400">Réussit le Jan 14, 2025</div>
                   </div>
                   <div className="text-xs text-gray-400">1h 45m</div>
                 </div>
