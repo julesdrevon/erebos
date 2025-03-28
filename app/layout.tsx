@@ -34,6 +34,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} antialiased`}
       >
         {children}
+        <SpeedInsights/>
       </body>
     </html>
   );
