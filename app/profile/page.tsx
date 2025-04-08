@@ -1,21 +1,88 @@
 "use client"
-import { SetStateAction, useState} from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import Image from 'next/image';
 import Result from "@/app/components/result";
 
 export default function Profile() {
-  const [name, setName] = useState("Pierre");
-  const handleNameChange = (event: { target: { value: SetStateAction<string>; }; }) => {
-    setName(event.target.value);
+  const [name, setName] = useState("");
+  const [oldName, setOldName] = useState("");
+  const router = useRouter();
+
+  // Vérifie l'authentification au chargement de la page
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await axios.post(
+          "https://api.jules-drevon.fr/api/users/authenticated/",
+          {},
+          { withCredentials: true }
+        );
+        const userRes = await axios.get(
+          "https://api.jules-drevon.fr/api/users/datas/",
+          { withCredentials: true }
+        );
+        setName(userRes.data.username);
+        setOldName(userRes.data.username);
+      } catch (error: unknown) {
+        try {
+          console.log('token refreshing');
+          await axios.post(
+            "https://api.jules-drevon.fr/api/users/token/refresh/",
+            {},
+            { withCredentials: true }
+          );
+          console.log('token refreshed');
+          const userRes = await axios.get(
+            "https://api.jules-drevon.fr/api/users/datas/",
+            { withCredentials: true }
+          );
+          setName(userRes.data.username);
+          setOldName(userRes.data.username);
+          checkAuth();
+        } catch (refreshError) {
+          router.push("/login");
+        }
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  // Change localement le nom
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
   };
+
+  // Envoie le nom mis à jour à l'API seulement s’il est différent
+  const handleNameBlur = async () => {
+    if (name !== oldName) {
+      try {
+        await axios.patch("https://api.jules-drevon.fr/api/users/update/", { username: name }, { withCredentials: true });
+        setOldName(name);
+      } catch (err) {
+        console.error("Erreur lors de la mise à jour du nom :", err);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post("https://api.jules-drevon.fr/api/users/logout/", {}, {
+        withCredentials: true,
+      });
+      router.push("/login");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion :", error);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen relative">
       <div className="absolute inset-0 bg-[url(../public/ProfileBackground.jpg)] bg-cover bg-center -z-50 opacity-50" />
-
       <Navbar />
-
       <main className="flex-grow w-full flex flex-col justify-center items-center h-full font-orbitron gap-5">
         <div className="bg-gray-800/80 border-2 border-gray-700 bg-opacity-90 rounded-lg p-10 w-full lg:max-w-1/2 max-w-3/4 pt-14 relative flex justify-center">
           <Image src={"/Avatar.jpg"} alt="Profile" width={100} height={100} className="rounded-full border-2 border-gray-700 bg-gray-800/80 absolute -top-14" />
@@ -24,30 +91,20 @@ export default function Profile() {
               <div className="flex items-center justify-center">
                 <div className="flex items-center justify-center bg-gray-900 py-2 px-4 rounded border-2 border-gray-700 w-full">
                   <input
-                    className="text-sm outline-none w-full"
+                    className="text-sm outline-none w-full bg-transparent text-white"
                     type="text"
-                    value={name} // Valeur liée à l'état local
-                    onChange={handleNameChange} // Met à jour l'état quand l'utilisateur tape
+                    value={name}
+                    onChange={handleNameChange}
+                    onBlur={handleNameBlur}
                   />
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g id="Frame">
-                      <g clipPath="url(#clip0_28_177)">
-                        <path id="Vector" d="M13.7812 1.84053L14.1594 2.21865C14.4531 2.5124 14.4531 2.9874 14.1594 3.27803L13.25 4.19053L11.8094 2.7499L12.7188 1.84053C13.0125 1.54678 13.4875 1.54678 13.7781 1.84053H13.7812ZM6.55625 8.00615L10.75 3.80928L12.1906 5.2499L7.99375 9.44365C7.90313 9.53428 7.79062 9.5999 7.66875 9.63428L5.84062 10.1562L6.3625 8.32803C6.39688 8.20615 6.4625 8.09365 6.55312 8.00303L6.55625 8.00615ZM11.6594 0.781152L5.49375 6.94365C5.22188 7.21553 5.025 7.5499 4.92188 7.91553L4.02812 11.0405C3.95312 11.303 4.025 11.5843 4.21875 11.778C4.4125 11.9718 4.69375 12.0437 4.95625 11.9687L8.08125 11.0749C8.45 10.9687 8.78438 10.7718 9.05313 10.503L15.2188 4.34053C16.0969 3.4624 16.0969 2.0374 15.2188 1.15928L14.8406 0.781152C13.9625 -0.0969726 12.5375 -0.0969726 11.6594 0.781152ZM2.75 1.9999C1.23125 1.9999 0 3.23115 0 4.7499V13.2499C0 14.7687 1.23125 15.9999 2.75 15.9999H11.25C12.7688 15.9999 14 14.7687 14 13.2499V9.7499C14 9.33428 13.6656 8.9999 13.25 8.9999C12.8344 8.9999 12.5 9.33428 12.5 9.7499V13.2499C12.5 13.9405 11.9406 14.4999 11.25 14.4999H2.75C2.05938 14.4999 1.5 13.9405 1.5 13.2499V4.7499C1.5 4.05928 2.05938 3.4999 2.75 3.4999H6.25C6.66563 3.4999 7 3.16553 7 2.7499C7 2.33428 6.66563 1.9999 6.25 1.9999H2.75Z" fill="#9CA3AF"/>
-                      </g>
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_28_177">
-                        <path d="M0 0H16V16H0V0Z" fill="white"/>
-                      </clipPath>
-                    </defs>
+                    {/* SVG content */}
                   </svg>
                 </div>
               </div>
             </div>
-
             <div className="flex flex-col gap-2 w-full">
               <p className="text-gray-300">Sessions récentes</p>
-
               <div className="flex flex-col gap-2">
                 <Result status={"failure"} date={""} minutes={0} seconds={0}/>
                 <Result status={"failure"} date={""} minutes={0} seconds={0}/>
@@ -56,7 +113,7 @@ export default function Profile() {
             </div>
           </div>
         </div>
-        <button className="relative flex items-center justify-center gap-2 px-4 py-2 text-red-500 bg-gray-800 border-2 rounded-lg hover:cursor-not-allowed">
+        <button onClick={handleLogout} className="relative flex items-center justify-center gap-2 px-4 py-2 text-red-500 bg-gray-800 border-2 rounded-lg hover:cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-700 hover:scale-105 active:scale-95">
           <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 fill-current" />
           <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 fill-current" />
           <div className="flex items-center gap-2">
