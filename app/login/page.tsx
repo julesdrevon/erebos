@@ -17,13 +17,7 @@ const RoundedCorner = ({ position }: { position: 'top-left' | 'top-right' | 'bot
 };
 
 const InputField = ({
-                      label,
-                      type,
-                      value,
-                      onChange,
-                      name,
-                      id,
-                      placeholder
+                      label, type, value, onChange, name, id, placeholder
                     }: {
   label: string;
   type: string;
@@ -41,11 +35,11 @@ const InputField = ({
       type={type}
       value={value}
       onChange={onChange}
-      className="border-2 border-gold/50 rounded bg-zinc-800/50 p-2 outline-none text-gold-100 placeholder:text-gold-400"
       name={name}
       id={id}
       placeholder={placeholder}
       required
+      className="border-2 border-gold/50 rounded bg-zinc-800/50 p-2 outline-none text-gold-100 placeholder:text-gold-400"
     />
   </div>
 );
@@ -60,8 +54,9 @@ const ErebosLogo = () => (
   </div>
 );
 
-const Login = () => {
+export default function Login() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginStatus, setLoginStatus] = useState<string | null>(null);
@@ -75,43 +70,47 @@ const Login = () => {
           { withCredentials: true }
         );
         if (res.data.authenticated) {
-          router.push("/profile");
+          // déjà connecté → on redirige et on n'affiche jamais le login
+          router.replace("/profile");
+          return;
         }
-      } catch (error: any) {
-        if (error.response && error.response.status === 401) {
-        } else {
-          console.error("Erreur lors de la vérification de l'authentification :", error);
-        }
+      } catch {
+        // non connecté ou erreur → on continue vers le formulaire
       }
+      // utilisateur non authentifié : on affiche le formulaire
+      setLoading(false);
     };
+
     checkAuth();
   }, [router]);
 
+  // tant que l'auth n'a pas été vérifiée, on n'affiche rien
+  if (loading) {
+    return null;
+  }
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoginStatus('Connexion en cours...');
-
     try {
       const response = await axios.post(
         "https://api.jules-drevon.fr/api/users/token/",
         { email, password },
         { withCredentials: true }
       );
-      if (response.data.success == true) {
-        setLoginStatus('Connexion réussie !');
-        router.push('/profile');
+      if (response.data.success) {
+        router.replace('/profile');
       } else {
         setLoginStatus("Échec de la connexion. Vérifiez vos informations.");
       }
-    } catch (error: any) {
+    } catch {
       setLoginStatus("Échec de la connexion. Vérifiez vos informations.");
     }
   };
 
   return (
     <div className="h-dvh relative font-orbitron text-gold">
-      <div className="bg-[url(../public/LoginBackground.webp)] bg-cover bg-center -z-50 opacity-20 absolute inset-0" />
+      <div className="absolute inset-0 bg-[url(../public/LoginBackground.webp)] bg-cover bg-center -z-50 opacity-20" />
       <Link href="/" className="absolute m-10 flex items-center gap-1">
         ← <span className="hover:underline">Retour</span>
       </Link>
@@ -122,41 +121,41 @@ const Login = () => {
           Erebos <span>Connexion</span>
         </h2>
 
-        <div className="border-2 border-gold relative py-6 px-8 bg-zinc-800/40 w-full max-w-md">
+        <div className="relative border-2 border-gold bg-zinc-800/40 py-6 px-8 w-full max-w-md">
           <RoundedCorner position="top-left" />
           <RoundedCorner position="top-right" />
           <RoundedCorner position="bottom-left" />
           <RoundedCorner position="bottom-right" />
 
-          <form onSubmit={handleSubmit} className="flex flex-col justify-center items-center gap-6 w-full">
+          <form onSubmit={handleSubmit} className="flex flex-col w-full gap-6">
             <InputField
               label="Adresse email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               name="email"
               id="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               placeholder="Votre adresse email"
             />
             <InputField
               label="Mot de passe"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               name="password"
               id="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               placeholder="Votre mot de passe"
             />
 
             <motion.button
               type="submit"
-              className="flex justify-center items-center gap-2 bg-gold text-black w-full rounded p-2.5 uppercase text-sm hover:cursor-pointer hover:bg-opacity-80 transition-all duration-300 relative"
+              className="relative flex w-full items-center justify-center gap-2 bg-gold p-2.5 uppercase text-sm text-black transition-all duration-300 hover:bg-opacity-80"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
               <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-gold" />
               <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-gold" />
-              <Image src={'/Login.svg'} alt={'Login Icon'} width={15} height={15} className={"w-auto h-auto"}/>
+              <Image src="/Login.svg" alt="Login Icon" width={15} height={15} />
               Entrer à Erebos
             </motion.button>
           </form>
@@ -168,12 +167,10 @@ const Login = () => {
           )}
         </div>
 
-        <Link href="/register" className="hover:underline text-sm text-gold-200">
+        <Link href="/register" className="text-sm text-gold-200 hover:underline">
           Rejoindre l’aventure
         </Link>
       </div>
     </div>
   );
-};
-
-export default Login;
+}
