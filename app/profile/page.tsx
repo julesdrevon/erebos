@@ -1,20 +1,63 @@
+// pages/profile.tsx
+
 "use client";
 
-import { useEffect, useState, ChangeEvent, FocusEvent, FC } from "react";
+import { useEffect, useState, ChangeEvent, FC } from "react";
 import { useRouter } from "next/navigation";
 import axios, { AxiosResponse } from "axios";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import Image from "next/image";
-import Result from "@/app/components/result";
+
+// ----- TYPES -----
+
+interface RawGame {
+  game_id: number;      // identifiant unique
+  state: number;        // 0 = finished, 1 = in progress
+  time_left: number;    // secondes restantes
+}
+
+type Status = "success" | "failure" | "in_progress";
 
 interface Game {
   id: string;
-  status: "success" | "failure";
+  status: Status;
   date: string;
   minutes: number;
   seconds: number;
 }
+
+const statusConfig: Record<Status, { color: string; label: string }> = {
+  success:     { color: "text-green-500",  label: "Réussite" },
+  failure:     { color: "text-red-500",    label: "Échec"     },
+  in_progress: { color: "text-orange-500", label: "En cours"  },
+};
+
+interface ResultProps {
+  status: Status;
+  date: string;
+  minutes: number;
+  seconds: number;
+}
+
+const Result: FC<ResultProps> = ({ status, date, minutes, seconds }) => {
+  const { color, label } = statusConfig[status];
+  return (
+    <div className={`flex items-center justify-between p-4 border-2 rounded border-[#374151] bg-[#111827]`}>
+      <div className={"flex flex-col"}>
+        <div>
+          <span className={`font-medium ${color}`}>&#x25CF; {label}</span>
+        </div>
+        <span className="text-sm text-[#6B7280]">{date}</span>
+      </div>
+      <div className="text-sm text-[#6B7280]">
+        {minutes}m {seconds}s
+      </div>
+    </div>
+  );
+};
+
+// ----- PAGE PROFILE -----
 
 const Profile: FC = () => {
   const [name, setName] = useState("");
@@ -24,16 +67,14 @@ const Profile: FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuthAndFetch = async () => {
+    const fetchData = async () => {
       try {
-        // 1) Vérification d'authentification
         await axios.post(
           "https://api.jules-drevon.fr/api/users/authenticated/",
           {},
           { withCredentials: true }
         );
 
-        // 2) Si OK, on récupère le profil
         const userRes: AxiosResponse<{ username: string }> = await axios.get(
           "https://api.jules-drevon.fr/api/users/datas/",
           { withCredentials: true }
@@ -41,35 +82,42 @@ const Profile: FC = () => {
         setName(userRes.data.username);
         setOldName(userRes.data.username);
 
-        // 3) puis les parties
-        const gamesRes: AxiosResponse<Game[]> = await axios.get(
+        const gamesRes: AxiosResponse<RawGame[]> = await axios.get(
           "https://api.jules-drevon.fr/api/game/",
           { withCredentials: true }
         );
-        setUserGames(gamesRes.data);
+        console.log("RAW GAMES", gamesRes.data);
 
-        // 4) tout s'est bien passé
+        const mapped = gamesRes.data.map(g => {
+          const id = String(g.game_id);
+          let status: Status;
+          if (g.state === 1) {
+            status = "in_progress";
+          } else {
+            status = g.time_left === 0 ? "failure" : "success";
+          }
+          const date = new Date().toLocaleDateString();
+          const total = 600;
+          const played = Math.max(total - g.time_left, 0);
+          const minutes = Math.floor(played / 60);
+          const seconds = played % 60;
+          return { id, status, date, minutes, seconds };
+        });
+
+        setUserGames(mapped);
         setLoading(false);
-      } catch (err) {
-        // en cas d'erreur (401, refresh fail, réseau…), on redirige
-        console.error("Auth check failed:", err);
+      } catch (e) {
+        console.error(e);
         router.push("/login");
       }
     };
-
-    checkAuthAndFetch();
+    fetchData();
   }, [router]);
 
-  // Tant que la vérif/auth + données ne sont pas chargées, on n'affiche rien
-  if (loading) {
-    return null; // ou un spinner <div>Chargement…</div>
-  }
+  if (loading) return null;
 
-  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  };
-
-  const handleNameBlur = async (e: FocusEvent<HTMLInputElement>) => {
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => setName(e.target.value);
+  const handleNameBlur = async () => {
     if (name !== oldName) {
       try {
         await axios.patch(
@@ -79,7 +127,7 @@ const Profile: FC = () => {
         );
         setOldName(name);
       } catch (err) {
-        console.error("Erreur lors de la mise à jour du nom :", err);
+        console.error(err);
       }
     }
   };
@@ -92,8 +140,8 @@ const Profile: FC = () => {
         { withCredentials: true }
       );
       router.push("/login");
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion :", error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -121,35 +169,18 @@ const Profile: FC = () => {
                   placeholder="Ton nom"
                   className="text-sm outline-none w-full bg-transparent text-white"
                 />
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  {/* SVG content */}
-                </svg>
               </div>
             </div>
             <div className="flex flex-col gap-2 w-full">
               <p className="text-gray-300">Sessions récentes</p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 w-full">
                 {userGames.length === 0 ? (
                   <div className="flex items-center justify-center w-full h-20 bg-gray-900 rounded-lg border-2 border-gray-700">
                     <p className="text-gray-500">Aucune partie trouvée.</p>
                   </div>
-                ) : (
-                  userGames.map((game) => (
-                    <Result
-                      key={game.id}
-                      status={game.status}
-                      date={game.date}
-                      minutes={game.minutes}
-                      seconds={game.seconds}
-                    />
-                  ))
-                )}
+                ) : ([...userGames].slice().reverse().map(game => (
+                  <Result key={game.id} {...game} />
+                )))}
               </div>
             </div>
           </div>

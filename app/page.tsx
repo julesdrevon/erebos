@@ -2,8 +2,30 @@
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import { useRouter } from "next/navigation";
+import {useEffect} from "react";
+import axios from "axios";
 
 export default function Home() {
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await axios.post(
+          "https://api.jules-drevon.fr/api/users/authenticated/",
+          {},
+          { withCredentials: true }
+        );
+        if (res.data.authenticated) {
+          console.log("✅ Connecté")
+        }
+      } catch {
+        console.log("❌ Non connecté")
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   const router = useRouter();
   return (
     <div className="relative h-dvh">
