@@ -1,5 +1,3 @@
-// pages/profile.tsx
-
 "use client";
 
 import { useEffect, useState, ChangeEvent, FC } from "react";
@@ -9,12 +7,10 @@ import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import Image from "next/image";
 
-// ----- TYPES -----
-
 interface RawGame {
-  game_id: number;      // identifiant unique
-  state: number;        // 0 = finished, 1 = in progress
-  time_left: number;    // secondes restantes
+  game_id: number;
+  state: number;
+  time_left: number;
 }
 
 type Status = "success" | "failure" | "in_progress";
@@ -28,9 +24,9 @@ interface Game {
 }
 
 const statusConfig: Record<Status, { color: string; label: string }> = {
-  success:     { color: "text-green-500",  label: "Réussite" },
-  failure:     { color: "text-red-500",    label: "Échec"     },
-  in_progress: { color: "text-orange-500", label: "En cours"  },
+  success: { color: "text-green-500", label: "Réussite" },
+  failure: { color: "text-red-500", label: "Échec" },
+  in_progress: { color: "text-orange-500", label: "En cours" },
 };
 
 interface ResultProps {
@@ -57,8 +53,6 @@ const Result: FC<ResultProps> = ({ status, date, minutes, seconds }) => {
   );
 };
 
-// ----- PAGE PROFILE -----
-
 const Profile: FC = () => {
   const [name, setName] = useState("");
   const [oldName, setOldName] = useState("");
@@ -66,27 +60,48 @@ const Profile: FC = () => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const getAccessToken = (): string | null => {
+    return sessionStorage.getItem("access_token") || null;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
+      const token = getAccessToken();
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
       try {
         await axios.post(
           "https://api.jules-drevon.fr/api/users/authenticated/",
           {},
-          { withCredentials: true }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         const userRes: AxiosResponse<{ username: string }> = await axios.get(
           "https://api.jules-drevon.fr/api/users/datas/",
-          { withCredentials: true }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setName(userRes.data.username);
         setOldName(userRes.data.username);
 
         const gamesRes: AxiosResponse<RawGame[]> = await axios.get(
           "https://api.jules-drevon.fr/api/game/",
-          { withCredentials: true }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
-        console.log("RAW GAMES", gamesRes.data);
 
         const mapped = gamesRes.data.map(g => {
           const id = String(g.game_id);
@@ -117,13 +132,20 @@ const Profile: FC = () => {
   if (loading) return null;
 
   const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => setName(e.target.value);
+
   const handleNameBlur = async () => {
     if (name !== oldName) {
       try {
+        const token = getAccessToken();
+        if (!token) return;
         await axios.patch(
           "https://api.jules-drevon.fr/api/users/update/",
           { username: name },
-          { withCredentials: true }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         setOldName(name);
       } catch (err) {
@@ -132,17 +154,15 @@ const Profile: FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await axios.post(
-        "https://api.jules-drevon.fr/api/users/logout/",
-        {},
-        { withCredentials: true }
-      );
-      router.push("/login");
-    } catch (err) {
-      console.error(err);
-    }
+  const handleLogout = () => {
+    // Supprimer les tokens
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+
+    document.cookie = "access_token=; path=/; max-age=0;";
+    document.cookie = "refresh_token=; path=/; max-age=0;";
+
+    router.push("/login");
   };
 
   return (
@@ -178,9 +198,11 @@ const Profile: FC = () => {
                   <div className="flex items-center justify-center w-full h-20 bg-gray-900 rounded-lg border-2 border-gray-700">
                     <p className="text-gray-500">Aucune partie trouvée.</p>
                   </div>
-                ) : ([...userGames].slice().reverse().map(game => (
-                  <Result key={game.id} {...game} />
-                )))}
+                ) : (
+                  [...userGames].slice().reverse().map(game => (
+                    <Result key={game.id} {...game} />
+                  ))
+                )}
               </div>
             </div>
           </div>

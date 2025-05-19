@@ -63,47 +63,58 @@ export default function Login() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      const token = sessionStorage.getItem("access_token");
+      if (!token) return setLoading(false);
+
       try {
         const res = await axios.post(
           "https://api.jules-drevon.fr/api/users/authenticated/",
           {},
-          { withCredentials: true }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }
+          }
         );
         if (res.data.authenticated) {
-          // déjà connecté → on redirige et on n'affiche jamais le login
           router.replace("/profile");
           return;
         }
       } catch {
-        // non connecté ou erreur → on continue vers le formulaire
+        // non connecté ou token invalide
       }
-      // utilisateur non authentifié : on affiche le formulaire
       setLoading(false);
     };
 
     checkAuth();
   }, [router]);
 
-  // tant que l'auth n'a pas été vérifiée, on n'affiche rien
-  if (loading) {
-    return null;
-  }
+  if (loading) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginStatus('Connexion en cours...');
+
     try {
       const response = await axios.post(
         "https://api.jules-drevon.fr/api/users/token/",
-        { email, password },
-        { withCredentials: true }
+        { email, password }
       );
-      if (response.data.success) {
+
+      if (response.status === 200 && response.data.access && response.data.refresh) {
+        const { access, refresh } = response.data;
+
+        sessionStorage.setItem('access_token', access);
+        sessionStorage.setItem('refresh_token', refresh);
+        document.cookie = `access_token=${access}; path=/;`;
+        document.cookie = `refresh_token=${refresh}; path=/;`;
+
         router.replace('/profile');
       } else {
         setLoginStatus("Échec de la connexion. Vérifiez vos informations.");
       }
-    } catch {
+    } catch (err) {
+      console.error("Erreur API :", err);
       setLoginStatus("Échec de la connexion. Vérifiez vos informations.");
     }
   };
@@ -149,7 +160,10 @@ export default function Login() {
 
             <motion.button
               type="submit"
-              className="relative flex w-full items-center justify-center gap-2 bg-gold p-2.5 uppercase text-sm text-black transition-all duration-300 hover:bg-opacity-80"
+              disabled={loginStatus === 'Connexion en cours...'}
+              className={`relative flex w-full items-center justify-center gap-2 p-2.5 uppercase text-sm text-black transition-all duration-300 ${
+                loginStatus === 'Connexion en cours...' ? 'bg-gold/50' : 'bg-gold hover:bg-opacity-80'
+              }`}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >

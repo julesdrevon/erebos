@@ -1,10 +1,11 @@
 "use client";
 
-import {useEffect} from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import { useUnityContext } from "react-unity-webgl";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 
 const Unity = dynamic(
@@ -13,6 +14,10 @@ const Unity = dynamic(
 );
 
 export default function Game() {
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const router = useRouter();
+
   const { unityProvider, isLoaded, loadingProgression } = useUnityContext({
     loaderUrl: "/engine/Build/export.loader.js",
     dataUrl: "/engine/Build/export.data",
@@ -21,31 +26,43 @@ export default function Game() {
   });
 
   useEffect(() => {
-    const getCookie = async (name: string) => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(";").shift();
-      return null;
-    };
-
     const checkAuth = async () => {
+      const token = sessionStorage.getItem("access_token");
+      if (!token) {
+        setAuthToken(null);
+        router.push("/login");
+        return;
+      }
+
       try {
         const res = await axios.post(
           "https://api.jules-drevon.fr/api/users/authenticated/",
           {},
-          { withCredentials: true }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
+
         if (res.data.authenticated) {
-          console.log("✅ Connecté")
-          console.log(await getCookie("access_token"));
+          setAuthToken(token);
+        } else {
+          router.push("/login");
         }
-      } catch {
-        console.log("❌ Non connecté")
+      } catch (err) {
+        console.error("Erreur de vérification :", err);
+        router.push("/login");
+      } finally {
+        setCheckingAuth(false);
       }
     };
 
     checkAuth();
-  }, []);
+  }, [router]);
+
+  // On bloque le rendu de Unity tant que l’auth n’est pas vérifiée
+  if (checkingAuth) return null;
 
   return (
     <div className="flex flex-col h-screen bg-gray-900">
