@@ -15,6 +15,7 @@ const Unity = dynamic(
 
 export default function Game() {
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
 
@@ -27,9 +28,10 @@ export default function Game() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = sessionStorage.getItem("access_token");
-      if (!token) {
-        setAuthToken(null);
+      const access = sessionStorage.getItem("access_token");
+      const refresh = sessionStorage.getItem("refresh_token");
+
+      if (!access || !refresh) {
         router.push("/login");
         return;
       }
@@ -40,13 +42,14 @@ export default function Game() {
           {},
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${access}`,
             },
           }
         );
 
         if (res.data.authenticated) {
-          setAuthToken(token);
+          setAuthToken(access);
+          setRefreshToken(refresh);
         } else {
           router.push("/login");
         }
@@ -61,7 +64,40 @@ export default function Game() {
     checkAuth();
   }, [router]);
 
-  // On bloque le rendu de Unity tant que l’auth n’est pas vérifiée
+  // Envoi des tokens à Unity une fois le jeu chargé
+  useEffect(() => {
+    if (isLoaded && authToken && refreshToken) {
+      window.dispatchEvent(
+        new CustomEvent("SendTokensToUnity", {
+          detail: {
+            accessToken: authToken,
+            refreshToken: refreshToken,
+          },
+        })
+      );
+    }
+  }, [isLoaded, authToken, refreshToken]);
+
+  // Écoute côté Unity
+  type UnityProviderWithSend = typeof unityProvider & {
+    sendMessage: (gameObject: string, methodName: string, parameter: string) => void;
+  };
+
+  const unity = unityProvider as UnityProviderWithSend;
+  useEffect(() => {
+    const sendToUnity = (e: any) => {
+      const { accessToken, refreshToken } = e.detail;
+      if (typeof unity.sendMessage === "function") {
+        unity.sendMessage("AuthReceiver", "ReceiveAccessToken", accessToken);
+        unity.sendMessage("AuthReceiver", "ReceiveRefreshToken", refreshToken);
+      }
+    };
+
+    window.addEventListener("SendTokensToUnity", sendToUnity);
+    return () =>
+      window.removeEventListener("SendTokensToUnity", sendToUnity);
+  }, [unityProvider]);
+
   if (checkingAuth) return null;
 
   return (
