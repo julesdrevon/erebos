@@ -67,65 +67,96 @@ const Profile: FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       const token = getAccessToken();
+      const refreshToken = sessionStorage.getItem("refresh_token");
+
       if (!token) {
         router.push("/login");
         return;
       }
 
+      const authRequest = async (accessToken: string) => {
+        try {
+          // Vérifie que le token est valide
+          await axios.post(
+            "https://api.jules-drevon.fr/api/users/authenticated/",
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          // Requêtes après authentification
+          const userRes: AxiosResponse<{ username: string }> = await axios.get(
+            "https://api.jules-drevon.fr/api/users/datas/",
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+          setName(userRes.data.username);
+          setOldName(userRes.data.username);
+
+          const gamesRes: AxiosResponse<RawGame[]> = await axios.get(
+            "https://api.jules-drevon.fr/api/game/",
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          const mapped = gamesRes.data.map(g => {
+            const id = String(g.game_id);
+            let status: Status;
+            if (g.state === 1) {
+              status = "in_progress";
+            } else {
+              status = g.time_left === 0 ? "failure" : "success";
+            }
+            const date = new Date().toLocaleDateString();
+            const total = 600;
+            const played = Math.max(total - g.time_left, 0);
+            const minutes = Math.floor(played / 60);
+            const seconds = played % 60;
+            return { id, status, date, minutes, seconds };
+          });
+
+          setUserGames(mapped);
+          setLoading(false);
+        } catch (err) {
+          throw err;
+        }
+      };
+
       try {
-        await axios.post(
-          "https://api.jules-drevon.fr/api/users/authenticated/",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        await authRequest(token);
+      } catch (err) {
+        if (!refreshToken) {
+          router.push("/login");
+          return;
+        }
 
-        const userRes: AxiosResponse<{ username: string }> = await axios.get(
-          "https://api.jules-drevon.fr/api/users/datas/",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setName(userRes.data.username);
-        setOldName(userRes.data.username);
+        try {
+          const refreshRes = await axios.post(
+            "https://api.jules-drevon.fr/api/users/token/refresh/",
+            { refresh: refreshToken }
+          );
 
-        const gamesRes: AxiosResponse<RawGame[]> = await axios.get(
-          "https://api.jules-drevon.fr/api/game/",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+          const newAccess = refreshRes.data.access;
+          sessionStorage.setItem("access_token", newAccess);
+          document.cookie = `access_token=${newAccess}; path=/;`;
 
-        const mapped = gamesRes.data.map(g => {
-          const id = String(g.game_id);
-          let status: Status;
-          if (g.state === 1) {
-            status = "in_progress";
-          } else {
-            status = g.time_left === 0 ? "failure" : "success";
-          }
-          const date = new Date().toLocaleDateString();
-          const total = 600;
-          const played = Math.max(total - g.time_left, 0);
-          const minutes = Math.floor(played / 60);
-          const seconds = played % 60;
-          return { id, status, date, minutes, seconds };
-        });
-
-        setUserGames(mapped);
-        setLoading(false);
-      } catch (e) {
-        console.error(e);
-        router.push("/login");
+          await authRequest(newAccess); // relancer avec le nouveau token
+        } catch (refreshErr) {
+          console.error("Refresh token failed", refreshErr);
+          router.push("/login");
+        }
       }
     };
+
     fetchData();
   }, [router]);
 

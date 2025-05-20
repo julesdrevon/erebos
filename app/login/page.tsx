@@ -63,8 +63,10 @@ export default function Login() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = sessionStorage.getItem("access_token");
-      if (!token) return setLoading(false);
+      const accessToken = sessionStorage.getItem("access_token");
+      const refreshToken = sessionStorage.getItem("refresh_token");
+
+      if (!accessToken) return setLoading(false);
 
       try {
         const res = await axios.post(
@@ -72,22 +74,60 @@ export default function Login() {
           {},
           {
             headers: {
-              Authorization: `Bearer ${token}`,
-            }
+              Authorization: `Bearer ${accessToken}`,
+            },
           }
         );
+
         if (res.data.authenticated) {
           router.replace("/profile");
           return;
         }
-      } catch {
-        // non connecté ou token invalide
+      } catch (err) {
+        // Si échec, tente refresh
+        if (!refreshToken) {
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const refreshRes = await axios.post(
+            "https://api.jules-drevon.fr/api/users/token/refresh/",
+            { refresh: refreshToken }
+          );
+
+          if (refreshRes.status === 200 && refreshRes.data.access) {
+            const newAccess = refreshRes.data.access;
+            sessionStorage.setItem("access_token", newAccess);
+            document.cookie = `access_token=${newAccess}; path=/;`;
+
+            // Re-tente la vérif d'authentification avec le nouveau token
+            const retryRes = await axios.post(
+              "https://api.jules-drevon.fr/api/users/authenticated/",
+              {},
+              {
+                headers: {
+                  Authorization: `Bearer ${newAccess}`,
+                },
+              }
+            );
+
+            if (retryRes.data.authenticated) {
+              router.replace("/profile");
+              return;
+            }
+          }
+        } catch (refreshErr) {
+          // Si refresh échoue, on reste déconnecté
+        }
       }
+
       setLoading(false);
     };
 
     checkAuth();
   }, [router]);
+
 
   if (loading) return null;
 

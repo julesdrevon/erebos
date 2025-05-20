@@ -1,9 +1,9 @@
 const cacheName = "DefaultCompany-Erebos-0.1.0";
 const contentToCache = [
-    "Build/export.loader.js",
-    "Build/export.framework.js",
-    "Build/export.data",
-    "Build/export.wasm",
+    "Build/engine.loader.js",
+    "Build/engine.framework.js",
+    "Build/engine.data",
+    "Build/engine.wasm",
     "TemplateData/style.css"
 
 ];
