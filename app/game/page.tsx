@@ -1,8 +1,7 @@
 "use client";
 
-import React, { Fragment } from "react";
+import React, { Fragment, useState, useEffect } from "react";
 import { Unity, useUnityContext } from "react-unity-webgl";
-import { useState, useEffect } from "react";
 import Navbar from "@/app/components/navbar";
 import Footer from "@/app/components/footer";
 import dynamic from "next/dynamic";
@@ -16,10 +15,10 @@ export default function Game() {
   const router = useRouter();
 
   const { unityProvider, isLoaded, loadingProgression, sendMessage } = useUnityContext({
-    loaderUrl: "/engine/Build/export.loader.js",
-    dataUrl: "/engine/Build/export.data",
-    frameworkUrl: "/engine/Build/export.framework.js",
-    codeUrl: "/engine/Build/export.wasm",
+    loaderUrl: "/engine/Build/engine.loader.js",
+    dataUrl: "/engine/Build/engine.data",
+    frameworkUrl: "/engine/Build/engine.framework.js",
+    codeUrl: "/engine/Build/engine.wasm",
   });
 
   useEffect(() => {
@@ -84,47 +83,41 @@ export default function Game() {
     checkAuth();
   }, [router]);
 
-  // // Envoi des tokens à Unity une fois le jeu chargé
-  // useEffect(() => {
-  //   if (isLoaded && authToken && refreshToken) {
-  //     console.log("🚀 Envoi des tokens via CustomEvent → Unity WebGL");
-  //
-  //     window.dispatchEvent(
-  //       new CustomEvent("SendTokensToUnity", {
-  //         detail: {
-  //           accessToken: authToken,
-  //           refreshToken: refreshToken,
-  //         },
-  //       })
-  //     );
-  //   }
-  // }, [isLoaded, authToken, refreshToken]);
-  //
-  // // Écoute côté Unity
-  // type UnityProviderWithSend = typeof unityProvider & {
-  //   sendMessage: (gameObject: string, methodName: string, parameter: string) => void;
-  // };
-  //
-  // const unity = unityProvider as UnityProviderWithSend;
-  //
-  // useEffect(() => {
-  //   const sendToUnity = (e: any) => {
-  //     const { accessToken, refreshToken } = e.detail;
-  //
-  //     if (typeof unity.sendMessage === "function") {
-  //       console.log("🛰 Envoi à Unity :", accessToken, refreshToken);
-  //
-  //       unity.sendMessage("APICube", "ReceiveAccessToken", accessToken);
-  //       unity.sendMessage("APICube", "ReceiveRefreshToken", refreshToken);
-  //       unity.sendMessage("APICube", "TestUnityCall", "Hello Unity from SendTokensToUnity event");
-  //     }
-  //   };
-  //
-  //   window.addEventListener("SendTokensToUnity", sendToUnity);
-  //   return () => {
-  //     window.removeEventListener("SendTokensToUnity", sendToUnity);
-  //   };
-  // }, [unityProvider]);
+  // ✅ Envoi des tokens à Unity une fois que tout est chargé
+  useEffect(() => {
+    if (isLoaded && authToken && refreshToken) {
+      console.log("🚀 Envoi des tokens via CustomEvent → Unity WebGL");
+
+      window.dispatchEvent(
+        new CustomEvent("SendTokensToUnity", {
+          detail: {
+            accessToken: authToken,
+            refreshToken: refreshToken,
+          },
+        })
+      );
+    }
+  }, [isLoaded, authToken, refreshToken]);
+
+  // Écoute côté Unity
+  useEffect(() => {
+    const sendToUnity = (e: any) => {
+      const { accessToken, refreshToken } = e.detail;
+
+      if (typeof sendMessage === "function") {
+        console.log("🛰 Envoi à Unity :", accessToken, refreshToken);
+
+        sendMessage("APICube", "ReceiveAccessToken", accessToken);
+        sendMessage("APICube", "ReceiveRefreshToken", refreshToken);
+        sendMessage("APICube", "TestUnityCall", "Hello Unity from SendTokensToUnity event");
+      }
+    };
+
+    window.addEventListener("SendTokensToUnity", sendToUnity);
+    return () => {
+      window.removeEventListener("SendTokensToUnity", sendToUnity);
+    };
+  }, [sendMessage]);
 
   if (checkingAuth) return null;
 
