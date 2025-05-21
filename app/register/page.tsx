@@ -90,38 +90,61 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegistrationStatus('En cours...');
+    console.log("🟡 Tentative d'inscription...");
+
     if (!email || !password || !confirmPassword) {
+      console.warn("⚠️ Champs manquants");
       setRegistrationStatus('Veuillez remplir tous les champs.');
       return;
     }
+
     if (password !== confirmPassword) {
+      console.warn("⚠️ Mots de passe différents");
       setRegistrationStatus('Les mots de passe ne correspondent pas.');
       return;
     }
+
+    const username = email.split('@')[0];
+    console.log("📨 Infos saisies :", { username, email, password });
+
     try {
       const response = await axios.post(
         "https://api.jules-drevon.fr/api/users/register/",
-        { username: "Erebos_User", email, password },
+        { username, email, password },
         { withCredentials: true }
       );
-      if (response.data.email?.[0] === "user with this email already exists.") {
+
+      console.log("✅ Réponse de l'API register :", response.data);
+
+      if (response.data?.email?.[0] === "user with this email already exists.") {
+        console.warn("⚠️ Utilisateur déjà existant");
         setRegistrationStatus('Un utilisateur avec cette adresse email existe déjà.');
         return;
       }
-      if (response.data.email === email) {
-        const login = await axios.post(
-          "https://api.jules-drevon.fr/api/users/token/",
-          { email, password },
-          { withCredentials: true }
-        );
-        if (login.data.success) {
-          router.replace('/profile');
-          return;
-        }
+
+      console.log("🔐 Connexion automatique...");
+      const login = await axios.post(
+        "https://api.jules-drevon.fr/api/users/token/",
+        { email, password },
+        { withCredentials: true }
+      );
+
+      console.log("✅ Connexion réussie :", login.data);
+
+      if (login.data.access && login.data.refresh) {
+        console.log("📦 Stockage des tokens...");
+        sessionStorage.setItem("access_token", login.data.access);
+        sessionStorage.setItem("refresh_token", login.data.refresh);
+
+        console.log("🚀 Redirection vers /profile");
+        router.replace('/profile');
+      } else {
+        console.warn("⚠️ Connexion échouée après inscription");
+        setRegistrationStatus('Inscription réussie mais connexion échouée. Veuillez vous connecter manuellement.');
       }
-      setRegistrationStatus('Inscription échouée. Veuillez réessayer.');
     } catch (err: any) {
-      setRegistrationStatus(`Erreur lors de l'inscription: ${err.message || 'Une erreur est survenue.'}`);
+      console.error("❌ Erreur pendant l'inscription :", err);
+      setRegistrationStatus(`Erreur lors de l'inscription: ${err?.response?.data?.detail || err.message}`);
     }
   };
 
