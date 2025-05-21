@@ -74,38 +74,31 @@ export default function Register() {
         );
         if (res.data.authenticated) {
           router.replace("/profile");
-          return;  // si authentifié, on sort sans toucher à loading
+          return;
         }
       } catch {
-        // pas authentifié, on continue
       }
-      // ici : on sait que l'utilisateur n'est pas connecté → affichage du formulaire
       setLoading(false);
     })();
   }, [router]);
 
-  // Tant que la vérif n'est pas terminée, on n'affiche rien
   if (loading) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegistrationStatus('En cours...');
-    console.log("🟡 Tentative d'inscription...");
 
     if (!email || !password || !confirmPassword) {
-      console.warn("⚠️ Champs manquants");
       setRegistrationStatus('Veuillez remplir tous les champs.');
       return;
     }
 
     if (password !== confirmPassword) {
-      console.warn("⚠️ Mots de passe différents");
       setRegistrationStatus('Les mots de passe ne correspondent pas.');
       return;
     }
 
     const username = email.split('@')[0];
-    console.log("📨 Infos saisies :", { username, email, password });
 
     try {
       const response = await axios.post(
@@ -114,36 +107,26 @@ export default function Register() {
         { withCredentials: true }
       );
 
-      console.log("✅ Réponse de l'API register :", response.data);
-
       if (response.data?.email?.[0] === "user with this email already exists.") {
-        console.warn("⚠️ Utilisateur déjà existant");
         setRegistrationStatus('Un utilisateur avec cette adresse email existe déjà.');
         return;
       }
 
-      console.log("🔐 Connexion automatique...");
       const login = await axios.post(
         "https://api.jules-drevon.fr/api/users/token/",
         { email, password },
         { withCredentials: true }
       );
 
-      console.log("✅ Connexion réussie :", login.data);
-
       if (login.data.access && login.data.refresh) {
-        console.log("📦 Stockage des tokens...");
         sessionStorage.setItem("access_token", login.data.access);
         sessionStorage.setItem("refresh_token", login.data.refresh);
 
-        console.log("🚀 Redirection vers /profile");
         router.replace('/profile');
       } else {
-        console.warn("⚠️ Connexion échouée après inscription");
         setRegistrationStatus('Inscription réussie mais connexion échouée. Veuillez vous connecter manuellement.');
       }
     } catch (err: any) {
-      console.error("❌ Erreur pendant l'inscription :", err);
       setRegistrationStatus(`Erreur lors de l'inscription: ${err?.response?.data?.detail || err.message}`);
     }
   };
