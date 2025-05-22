@@ -121,25 +121,22 @@ export default function Game() {
 
   if (checkingAuth) return null;
 
-  function handleClickSpawnEnemies() {
-    sendMessage("APICube", "TestUnityCall", "100");
-  }
-
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       <Navbar />
-      <main className="flex-1 overflow-hidden p-10">
+      <main className="flex-1 overflow-hidden py-10 px-36">
         {!isLoaded && (
           <p className="text-white text-center">
             Chargement du jeu ({Math.round(loadingProgression * 100)}%)...
           </p>
         )}
-        <Unity
-          unityProvider={unityProvider}
-          style={{ width: "100%", height: "100%", borderRadius: "8px" }}
-          tabIndex={0}
-        />
-        <button onClick={handleClickSpawnEnemies}>Spawn Enemies</button>
+        <div className="w-full max-w-7xl max-h-fit mx-auto aspect-video max-h-[200px] rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+          <Unity
+            unityProvider={unityProvider}
+            style={{ width: "100%", height: "100%" }}
+            tabIndex={0}
+          />
+        </div>
       </main>
       <Footer />
     </div>
